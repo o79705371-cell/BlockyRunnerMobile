@@ -1,40 +1,32 @@
-name: CI
+name: Build Android APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main # или master, в зависимости от вашей ветки
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev cmake libffi-dev libssl-dev
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
-    - name: Install Buildozer and Cython
-      run: |
-        pip install --upgrade pip
-        pip install --user buildozer cython
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
 
-    - name: Build with Buildozer
-      run: |
-        export PATH=$PATH:~/.local/bin
-        buildozer -v android debug
-
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: package
-        path: bin/*.apk
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
